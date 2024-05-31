@@ -37,3 +37,8 @@ def load_last_processed_user(last_processed_user_file):
     except Exception as e:
         print(f"Error loading last processed user: {e}")
         return None
+
+def save_cookies(driver, file_path):
+    cookies = driver.get_cookies()
+    with open(file_path, 'w', encoding='utf-8') as file:
+        json.dump(cookies, file)
