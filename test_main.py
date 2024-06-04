@@ -9,6 +9,7 @@ from actions.load_followers import load_followers
 from actions.load_videos import load_videos
 from actions.download_videos import download_top_videos
 from database_manager import check_action_done, save_action_done
+from selenium.webdriver.common.by import By
 
 def start_browser():
     print("Starting browser...")
@@ -31,6 +32,9 @@ def get_user_unique_ids(json_file_path):
 
 def process_user(driver, unique_id, action):
     profile_url = f'https://www.tiktok.com/@{unique_id}'
+    driver.get(profile_url)  # 确保访问博主主页
+    time.sleep(5)  # 等待页面加载
+
     if action == 1 and not check_action_done(unique_id, 'load_followers'):
         load_followers(driver, unique_id)
     elif action == 2 and not check_action_done(unique_id, 'load_videos'):
