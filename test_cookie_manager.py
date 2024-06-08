@@ -3,8 +3,8 @@ import json
 def load_cookies(config_file_path):
     try:
         with open(config_file_path, 'r', encoding='utf-8') as file:
-            config = json.load(file)
-        return config['accounts'][0]['cookies']
+            cookies = json.load(file)
+        return cookies
     except Exception as e:
         print(f"Error loading cookies: {e}")
         return []
@@ -42,3 +42,9 @@ def save_cookies(driver, file_path):
     cookies = driver.get_cookies()
     with open(file_path, 'w', encoding='utf-8') as file:
         json.dump(cookies, file)
+
+def validate_cookies(cookies):
+    for cookie in cookies:
+        if 'sameSite' not in cookie or cookie['sameSite'] not in ["Strict", "Lax", "None"]:
+            cookie['sameSite'] = 'Lax'  # 默认设置为 'Lax'
+    return cookies
