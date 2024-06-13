@@ -6,15 +6,13 @@
                 "enableSsl": "Disabled"
             },
             "previewLimit": 50,
-            "server": "127.0.0.1",
+            "server": "localhost",
             "port": 3306,
-            "name": "MyLocalDB",
             "driver": "MySQL",
+            "name": "007",
+            "database": "tiktok_擦边",
             "username": "root",
-            "password": "6152434",
-            "database": "tiktok",
-            "passwordMode": "save",
-            "connectionTimeout": 30
+            "password": "6152434"
         }
     ]
 }

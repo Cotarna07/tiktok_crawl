@@ -1,7 +1,7 @@
 import time
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from database_manager import save_video_data, check_action_done, save_action_done
+from utils.database_manager import save_video_data
 
 def scroll_and_load_all_videos(driver):
     print("Scrolling to load all videos...")
@@ -28,8 +28,16 @@ def extract_video_data(driver):
             if "/video/" in video_url:
                 play_count_element = video.find_element(By.XPATH, './/strong[@data-e2e="video-views"]')
                 play_count_str = play_count_element.text if play_count_element else '0'
-                play_count = int(play_count_str.replace('K', '000').replace('M', '000000'))
-                video_data.append({'url': video_url, 'play_count': play_count})
+                
+                # 处理带有小数点的情况
+                if 'K' in play_count_str:
+                    play_count = float(play_count_str.replace('K', '')) * 1000
+                elif 'M' in play_count_str:
+                    play_count = float(play_count_str.replace('M', '')) * 1000000
+                else:
+                    play_count = float(play_count_str.replace(',', ''))
+                
+                video_data.append({'url': video_url, 'play_count': int(play_count)})
         except Exception as e:
             print(f"Error extracting video data: {e}")
     return video_data
@@ -37,11 +45,9 @@ def extract_video_data(driver):
 def load_videos(driver, unique_id):
     profile_url = f'https://www.tiktok.com/@{unique_id}'
 
-    if not check_action_done(unique_id, 'load_videos'):
-        driver.get(profile_url)
-        time.sleep(5)
-        scroll_and_load_all_videos(driver)
-        video_data = extract_video_data(driver)
-        save_video_data(unique_id, video_data)
-        save_action_done(unique_id, 'load_videos')
-        print(f"Extracted video data for {unique_id}: {video_data}")
+    driver.get(profile_url)
+    time.sleep(5)
+    scroll_and_load_all_videos(driver)
+    video_data = extract_video_data(driver)
+    save_video_data(unique_id, video_data)
+    print(f"Extracted video data for {unique_id}: {video_data}")

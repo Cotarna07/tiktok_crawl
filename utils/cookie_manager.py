@@ -46,5 +46,5 @@ def save_cookies(driver, file_path):
 def validate_cookies(cookies):
     for cookie in cookies:
         if 'sameSite' not in cookie or cookie['sameSite'] not in ["Strict", "Lax", "None"]:
-            cookie['sameSite'] = 'Lax'  # 默认设置为 'Lax'
+            cookie['sameSite'] = 'Lax'
     return cookies

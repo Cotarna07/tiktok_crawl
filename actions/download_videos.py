@@ -2,8 +2,6 @@ import os
 import time
 from selenium.webdriver.common.by import By
 from yt_dlp import YoutubeDL
-from random_actions import perform_random_actions
-from database_manager import check_action_done, save_action_done
 
 def download_video(video_url, save_path):
     ydl_opts = {
@@ -60,8 +58,7 @@ def download_top_videos(driver, profile_url, unique_id, max_videos=2):
 
     video_data.sort(key=lambda x: x['play_count'], reverse=True)
     for i, video in enumerate(video_data[:max_videos]):
+        print(f"Downloading video {i+1} for user: {unique_id}")
         save_path = os.path.join(save_dir, f"video_{i+1}.mp4")
         download_video(video['url'], save_path)
-
-    perform_random_actions(driver, profile_url)
-    save_action_done(unique_id, 'download_videos')
+    print(f"Downloaded {len(video_data[:max_videos])} videos for user: {unique_id}")
