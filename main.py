@@ -5,7 +5,7 @@ from utils.cookie_manager import load_cookies, update_browser_cookies, save_last
 from utils.browser_scheduler import start_chrome_browser, start_edge_browser, start_firefox_browser, kill_processes
 from actions.download_videos import download_top_videos
 from utils.random_actions import perform_random_actions
-from actions.load_followers import load_followers, load_following
+from actions.load_followers import load_list, import_list_to_database  # Ensure these functions are correctly defined and imported
 from actions.load_videos import load_videos
 
 def get_user_unique_ids(json_file_path):
@@ -24,10 +24,11 @@ def process_user(driver, unique_id, action, sub_action=None):
     print(f"Processing user: {unique_id} with action: {action}")
 
     if action == 1:
-        if sub_action == 'followers':
-            load_followers(driver, unique_id)
-        elif sub_action == 'following':
-            load_following(driver, unique_id)
+        if sub_action == '粉丝列表':
+            load_list(driver, unique_id, '粉丝列表')
+        elif sub_action == '关注列表':
+            load_list(driver, unique_id, '关注列表')
+        import_list_to_database(unique_id, sub_action)
     elif action == 2:
         load_videos(driver, unique_id)
     elif action == 3:
@@ -84,7 +85,7 @@ def main(action):
     config_file_path = r"D:\software\tiktok_crawl\config.json"
 
     if action == 1:
-        sub_action = input("Please provide a sub-action (followers, following): ")
+        sub_action = input("Please provide a sub-action (粉丝列表, 关注列表): ")
     else:
         sub_action = None
 
