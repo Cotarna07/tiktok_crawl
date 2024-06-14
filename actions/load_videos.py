@@ -23,10 +23,12 @@ def connect_to_database():
 def scroll_and_load_all_videos(driver):
     print("Scrolling to load all videos...")
     video_list_xpath = '/html/body/div[1]/div[2]/div[2]/div/div/div[2]/div[3]/div'
-    
+
     try:
         # 等待视频列表容器加载完成
-        video_list = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, video_list_xpath)))
+        video_list = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, video_list_xpath))
+        )
     except Exception as e:
         print(f"Error finding video list: {e}")
         return
@@ -39,16 +41,16 @@ def scroll_and_load_all_videos(driver):
         current_count = len(current_videos)
         print(f"Current count of videos: {current_count}")
 
+        scroll_height = random.randint(500, 800)  # 随机翻滚距离
+        driver.execute_script(f"arguments[0].scrollTop += {scroll_height};", video_list)
+        time.sleep(0.1)  # 短时间等待
+        
         if current_count == previous_count:
             no_new_video_count += 1
             print(f"No new videos loaded, attempt {no_new_video_count}.")
         else:
             no_new_video_count = 0
             previous_count = current_count
-
-        scroll_height = random.randint(500, 800)  # 随机翻滚距离
-        driver.execute_script(f"arguments[0].scrollTop += {scroll_height};", video_list)
-        time.sleep(0.1)  # 短时间等待
 
     print("Stopping scroll as no new videos loaded for twenty consecutive attempts.")
 
