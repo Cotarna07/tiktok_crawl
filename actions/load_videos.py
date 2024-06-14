@@ -22,13 +22,10 @@ def connect_to_database():
 
 def scroll_and_load_all_videos(driver):
     print("Scrolling to load all videos...")
-    video_list_xpath = '/html/body/div[1]/div[2]/div[2]/div/div/div[2]/div[3]/div'
-
+    video_list_xpath = '//div[@data-e2e="user-post-item-list"]'
+    
     try:
-        # 等待视频列表容器加载完成
-        video_list = WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, video_list_xpath))
-        )
+        video_list = driver.find_element(By.XPATH, video_list_xpath)
     except Exception as e:
         print(f"Error finding video list: {e}")
         return
@@ -36,15 +33,20 @@ def scroll_and_load_all_videos(driver):
     previous_count = 0
     no_new_video_count = 0
 
+    # 将模拟鼠标移动到第二个视频的特定元素处
+    second_video_element_xpath = '(//div[@data-e2e="user-post-item-list"]//div[contains(@class, "css-x6y88p-DivItemContainerV2")])[2]'
+    try:
+        second_video_element = driver.find_element(By.XPATH, second_video_element_xpath)
+        actions = ActionChains(driver)
+        actions.move_to_element(second_video_element).perform()
+    except Exception as e:
+        print(f"Error finding or moving to the second video element: {e}")
+
     while no_new_video_count < 20:
-        current_videos = driver.find_elements(By.XPATH, f'{video_list_xpath}/div')
+        current_videos = driver.find_elements(By.XPATH, f'{video_list_xpath}//div[contains(@class, "css-x6y88p-DivItemContainerV2")]')
         current_count = len(current_videos)
         print(f"Current count of videos: {current_count}")
 
-        scroll_height = random.randint(500, 800)  # 随机翻滚距离
-        driver.execute_script(f"arguments[0].scrollTop += {scroll_height};", video_list)
-        time.sleep(0.1)  # 短时间等待
-        
         if current_count == previous_count:
             no_new_video_count += 1
             print(f"No new videos loaded, attempt {no_new_video_count}.")
@@ -52,8 +54,10 @@ def scroll_and_load_all_videos(driver):
             no_new_video_count = 0
             previous_count = current_count
 
-    print("Stopping scroll as no new videos loaded for twenty consecutive attempts.")
+        driver.execute_script('arguments[0].scrollTo({top: arguments[0].scrollHeight, behavior: "smooth"})', video_list)
+        time.sleep(random.uniform(1, 3))  # 随机等待时间，模拟人为操作
 
+    print("Stopping scroll as no new videos loaded for twenty consecutive attempts.")
 def extract_video_data(driver):
     video_data = []
     print("Extracting video data...")

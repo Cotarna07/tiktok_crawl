@@ -55,7 +55,7 @@ def insert_follow_relationship(cursor, follower_id, followed_id):
 
 def scroll_list(driver, unique_id, list_type):
     try:
-        # 创建文件夹（如果不存在）
+        # 创建“关注列表”文件夹（如果不存在）
         output_folder = os.path.join(os.getcwd(), list_type)
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
@@ -74,18 +74,20 @@ def scroll_list(driver, unique_id, list_type):
         
         no_new_account_count = 0
 
+        # 获取初始账号位置
         element_location = initial_accounts[2].location
         x, y = element_location['x'], element_location['y']
 
         # 使用 pyautogui 移动鼠标并模拟中键点击
-        pyautogui.moveTo(x + 300, y+50)
+        pyautogui.moveTo(x+200, y+50)
         pyautogui.mouseDown(button='middle')
-        time.sleep(0.1)
+        time.sleep(0.1)  # 等待加载
         pyautogui.mouseUp(button='middle')
-        pyautogui.moveTo(x+300, y + 250)
+        pyautogui.moveTo(x+200, y+250)
 
         with open(output_file_path, 'w', encoding='utf-8') as file:
-            while no_new_account_count < 20:
+            while no_new_account_count < 10:
+
                 current_accounts = driver.find_elements(By.XPATH, f'{list_xpath}//li/div/div/a/div/p')
                 current_count = len(current_accounts)
                 print(f"Current count of accounts: {current_count}")
@@ -108,17 +110,16 @@ def scroll_list(driver, unique_id, list_type):
                     initial_count = current_count
                 
                 # 如果检测到20次滚动没有新用户，提前退出循环
-                if no_new_account_count >= 20:
+                if no_new_account_count >= 10:
                     break
 
-            print("Stopping scroll as no new accounts loaded for three consecutive attempts.")
+            print("Stopping scroll as no new accounts loaded for twenty consecutive attempts.")
             pyautogui.mouseDown(button='middle')
             time.sleep(0.1)
             pyautogui.mouseUp(button='middle')
-        
     except Exception as e:
-        print(f"Error scrolling {list_type}: {e}")
-        
+        print(f"Error scrolling followers list: {e}")
+
 def load_list(driver, unique_id, list_type):
     profile_url = f'https://www.tiktok.com/@{unique_id}'
     driver.get(profile_url)

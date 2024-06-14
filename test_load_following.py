@@ -88,7 +88,7 @@ def scroll_followers_list(driver, unique_id):
         pyautogui.moveTo(x+300, y + 250)
 
         with open(output_file_path, 'w', encoding='utf-8') as file:
-            while no_new_account_count < 40:
+            while no_new_account_count < 10:
 
                 current_accounts = driver.find_elements(By.XPATH, f'{followers_list_xpath}//li/div/div/a/div/p')
                 current_count = len(current_accounts)
@@ -112,13 +112,14 @@ def scroll_followers_list(driver, unique_id):
                     initial_count = current_count
                 
                 # 如果检测到20次滚动没有新用户，提前退出循环
-                if no_new_account_count >= 40:
+                if no_new_account_count >= 10:
                     break
 
             print("Stopping scroll as no new accounts loaded for twenty consecutive attempts.")
         
     except Exception as e:
         print(f"Error scrolling followers list: {e}")
+
 def load_following(driver, unique_id):
     profile_url = f'https://www.tiktok.com/@{unique_id}'
     driver.get(profile_url)
@@ -132,12 +133,6 @@ def load_following(driver, unique_id):
         
     except Exception as e:
         print(f"Error clicking following button or scrolling: {e}")
-
-# def load_cookies(driver, cookie_file):
-#     with open(cookie_file, 'r', encoding='utf-8') as file:
-#         cookies = json.load(file)
-#     for cookie in cookies:
-#         driver.add_cookie(cookie)
 
 def start_chrome_browser():
     subprocess.Popen([r"C:\Program Files\Google\Chrome\Application\chrome.exe", "--remote-debugging-port=9222"])
@@ -161,13 +156,8 @@ def import_followers_to_database(unique_id):
             user_data = {'uniqueId': user_unique_id, 'nickname': user_unique_id}
             update_or_insert_user(cursor, user_data)
 
-            cursor.execute("SELECT `用户ID` FROM `用户` WHERE `唯一ID` = %s", (unique_id,))
-            naoto_id = cursor.fetchone()[0]
-
-            cursor.execute("SELECT `用户ID` FROM `用户` WHERE `唯一ID` = %s", (user_unique_id,))
-            followed_id = cursor.fetchone()[0]
-
-            insert_follow_relationship(cursor, naoto_id, followed_id)
+            # 直接使用唯一ID进行插入
+            insert_follow_relationship(cursor, unique_id, user_unique_id)
     
     connection.commit()
     cursor.close()
@@ -182,7 +172,7 @@ if __name__ == "__main__":
     # load_cookies(driver, cookie_file)
     # time.sleep(5)
     
-    unique_id = "heavenmayhem"
+    unique_id = "naoto.hamanaka"
     load_following(driver, unique_id)
     
     import_followers_to_database(unique_id)

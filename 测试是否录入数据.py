@@ -15,9 +15,7 @@ def check_following_count(unique_id):
     query = """
     SELECT COUNT(*) AS `关注的博主数量`
     FROM `关注关系`
-    WHERE `唯一ID` = (
-        SELECT `用户ID` FROM `用户` WHERE `唯一ID` = %s
-    );
+    WHERE `唯一ID` = %s;
     """
     cursor.execute(query, (unique_id,))
     result = cursor.fetchone()
@@ -28,6 +26,6 @@ def check_following_count(unique_id):
     return result[0]
 
 if __name__ == "__main__":
-    unique_id = 'naoto.hamanaka'
+    unique_id = 'violet.bb66'
     count = check_following_count(unique_id)
     print(f"{unique_id} 关注的博主数量: {count}")
