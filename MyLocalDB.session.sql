@@ -82,7 +82,8 @@ CREATE TABLE `下载视频` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --@block
-SELECT  * FROM `关注关系`;
+SELECT  * FROM `视频信息`;
+SELECT  * FROM `用户`;
 
 
 --@block 数据清空
@@ -124,8 +125,9 @@ HAVING
 ORDER BY 
     关注次数 DESC;
 
---@block 添加唯一键
-mysqldump -u root -p --default-character-set=utf8mb4 --no-data --databases tiktok_擦边 > db_structure.sql
+--@block 视频表添加唯一键
+ALTER TABLE `视频信息`
+ADD CONSTRAINT unique_video_link UNIQUE (`唯一ID`, `视频链接`);
 
 
 --@block 查看数据重复情况
@@ -136,3 +138,10 @@ WHERE u.`唯一ID` = 'naoto.hamanaka'
 GROUP BY f.`关注ID`
 HAVING COUNT(*) > 1
 ORDER BY duplicate_count DESC;
+
+--@block 导出数据结构
+ALTER TABLE `用户`
+ADD COLUMN `关注列表` TINYINT(1) DEFAULT 0,
+ADD COLUMN `粉丝列表` TINYINT(1) DEFAULT 0;
+
+

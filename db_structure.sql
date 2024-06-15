@@ -16,7 +16,7 @@ CREATE TABLE `关注关系` (
   `是否处理` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`ID`),
   UNIQUE KEY `unique_follow_relationship` (`唯一ID`,`关注ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=95658 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=94891 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Table: 用户
 CREATE TABLE `用户` (
@@ -29,7 +29,7 @@ CREATE TABLE `用户` (
   `关注数量` int DEFAULT NULL,
   PRIMARY KEY (`用户ID`),
   UNIQUE KEY `唯一ID` (`唯一ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=90430 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=93489 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Table: 视频信息
 CREATE TABLE `视频信息` (
@@ -38,6 +38,7 @@ CREATE TABLE `视频信息` (
   `视频链接` varchar(255) NOT NULL,
   `播放数` int DEFAULT '0',
   `是否处理` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`ID`)
+  PRIMARY KEY (`ID`),
+  UNIQUE KEY `unique_video_link` (`唯一ID`,`视频链接`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

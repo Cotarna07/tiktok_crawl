@@ -1,12 +1,12 @@
 import time
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import random
 import os
 import mysql.connector
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.chrome.service import Service
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 
 # 数据库连接配置
 db_config = {
@@ -54,10 +54,11 @@ def scroll_and_load_all_videos(driver):
             no_new_video_count = 0
             previous_count = current_count
 
-        driver.execute_script('arguments[0].scrollTo({top: arguments[0].scrollHeight, behavior: "smooth"})', video_list)
+        driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
         time.sleep(random.uniform(1, 3))  # 随机等待时间，模拟人为操作
 
     print("Stopping scroll as no new videos loaded for twenty consecutive attempts.")
+
 def extract_video_data(driver):
     video_data = []
     print("Extracting video data...")
@@ -126,17 +127,13 @@ def import_video_data_to_database(unique_id):
 # 示例的保存到数据库的函数
 def save_video_data(cursor, unique_id, video_data):
     insert_query = """
-        INSERT INTO `视频` (`用户ID`, `视频链接`, `播放次数`, `抓取时间`)
+        INSERT INTO `视频信息` (`唯一ID`, `视频链接`, `播放数`, `抓取时间`)
         VALUES (%s, %s, %s, NOW())
-        ON DUPLICATE KEY UPDATE `播放次数` = VALUES(`播放次数`), `抓取时间` = NOW()
+        ON DUPLICATE KEY UPDATE `播放数` = VALUES(`播放数`), `抓取时间` = NOW()
     """
     cursor.execute(insert_query, (unique_id, video_data['url'], video_data['play_count']))
 
 if __name__ == "__main__":
-    from selenium import webdriver
-    from selenium.webdriver.chrome.service import Service
-    from webdriver_manager.chrome import ChromeDriverManager
-
     unique_id = 'patriciarodriguez9631'  # 替换为你要测试的博主ID
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 

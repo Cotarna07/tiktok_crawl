@@ -156,6 +156,13 @@ def import_list_to_database(unique_id, list_type):
             followed_id = cursor.fetchone()[0]
 
             insert_follow_relationship(cursor, naoto_id, followed_id)
+
+    # 更新用户表中“关注列表”或“粉丝列表”列的值
+    if list_type == '关注列表':
+        update_query = "UPDATE `用户` SET `关注列表` = 1 WHERE `唯一ID` = %s"
+    elif list_type == '粉丝列表':
+        update_query = "UPDATE `用户` SET `粉丝列表` = 1 WHERE `唯一ID` = %s"
+    cursor.execute(update_query, (unique_id,))
     
     connection.commit()
     cursor.close()
