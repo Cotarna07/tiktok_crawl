@@ -82,8 +82,8 @@ CREATE TABLE `下载视频` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --@block
-SELECT  * FROM `视频信息`;
 SELECT  * FROM `用户`;
+SELECT  * FROM `关注关系`;
 
 
 --@block 数据清空
@@ -104,9 +104,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 --@block
 SELECT u.*
 FROM `用户` u
-JOIN `关注关系` r ON u.`用户ID` = r.`关注ID`
-JOIN `用户` u2 ON r.`唯一ID` = u2.`用户ID`
-WHERE u2.`唯一ID` = 'naoto.hamanaka';
+JOIN `关注关系` r ON u.`唯一ID` = r.`关注ID`
+WHERE r.`唯一ID` = 'chenger0915';
 
 --@block
 SELECT 
@@ -140,8 +139,9 @@ HAVING COUNT(*) > 1
 ORDER BY duplicate_count DESC;
 
 --@block 导出数据结构
+-- 修改用户表以使关注列表和粉丝列表字段可以存储更多状态
 ALTER TABLE `用户`
-ADD COLUMN `关注列表` TINYINT(1) DEFAULT 0,
-ADD COLUMN `粉丝列表` TINYINT(1) DEFAULT 0;
+CHANGE `关注列表` `关注列表` ENUM('未处理', '已处理', '禁止') DEFAULT '未处理',
+CHANGE `粉丝列表` `粉丝列表` ENUM('未处理', '已处理', '禁止') DEFAULT '未处理';
 
 

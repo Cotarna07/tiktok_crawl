@@ -26,6 +26,6 @@ def check_following_count(unique_id):
     return result[0]
 
 if __name__ == "__main__":
-    unique_id = 'violet.bb66'
+    unique_id = 'matildeminasi__'
     count = check_following_count(unique_id)
     print(f"{unique_id} 关注的博主数量: {count}")
