@@ -81,7 +81,7 @@ def main(action):
         ("firefox", start_firefox_browser)
     ]
     browser_index = 0
-    run_duration = 5 * 60
+    run_duration = 30 * 60
     config_file_path = r"D:\software\tiktok_crawl\config.json"
 
     if action == 1:

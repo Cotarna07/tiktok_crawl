@@ -62,13 +62,14 @@ def insert_follow_relationship(cursor, follower_unique_id, followed_unique_id):
         ON DUPLICATE KEY UPDATE `是否处理` = FALSE
     """
     cursor.execute(insert_query, (follower_unique_id, followed_unique_id))
+
 def scroll_list(driver, unique_id, list_type):
     try:
         connection = connect_to_database()
         cursor = connection.cursor()
         if check_user_permission(cursor, unique_id, list_type):
             print(f"User {unique_id} is prohibited from accessing {list_type}.")
-            return
+            return False
 
         output_folder = os.path.join(os.getcwd(), list_type)
         if not os.path.exists(output_folder):
@@ -93,8 +94,8 @@ def scroll_list(driver, unique_id, list_type):
             connection.commit()
             cursor.close()
             connection.close()
-            return
-        
+            return False  # 添加这个返回值用于判断是否禁止
+
         unique_users = set()
         no_new_account_count = 0
 
@@ -147,9 +148,11 @@ def scroll_list(driver, unique_id, list_type):
         connection.commit()
         cursor.close()
         connection.close()
+        return True  # 成功处理列表
 
     except Exception as e:
         print(f"Error scrolling followers list: {e}")
+        return False
 
 def load_list(driver, unique_id, list_type):
     profile_url = f'https://www.tiktok.com/@{unique_id}'
@@ -163,9 +166,10 @@ def load_list(driver, unique_id, list_type):
         
         button.click()
         time.sleep(5)
-        scroll_list(driver, unique_id, list_type)
+        return scroll_list(driver, unique_id, list_type)
     except Exception as e:
         print(f"Error clicking {list_type} button or scrolling: {e}")
+        return False
 
 def import_list_to_database(unique_id, list_type):
     connection = connect_to_database()
@@ -174,13 +178,16 @@ def import_list_to_database(unique_id, list_type):
     output_folder = os.path.join(os.getcwd(), list_type)
     output_file_path = os.path.join(output_folder, f'{unique_id}.txt')
 
+    if not os.path.exists(output_file_path):
+        print(f"No data file found for user {unique_id}. Skipping import.")
+        return
+
     with open(output_file_path, 'r', encoding='utf-8') as file:
         for line in file:
             user_unique_id = line.strip()
             user_data = {'uniqueId': user_unique_id, 'nickname': user_unique_id}
             update_or_insert_user(cursor, user_data)
 
-            # 插入关注关系时，明确用户与关注者的关系
             if list_type == '关注列表':
                 insert_follow_relationship(cursor, unique_id, user_unique_id)
             elif list_type == '粉丝列表':
@@ -197,10 +204,10 @@ if __name__ == "__main__":
     action = input("Please provide an action (粉丝列表, 关注列表): ")
 
     if action == "粉丝列表":
-        load_list(driver, unique_id, '粉丝列表')
-        import_list_to_database(unique_id, '粉丝列表')
+        if load_list(driver, unique_id, '粉丝列表'):
+            import_list_to_database(unique_id, '粉丝列表')
     elif action == "关注列表":
-        load_list(driver, unique_id, '关注列表')
-        import_list_to_database(unique_id, '关注列表')
+        if load_list(driver, unique_id, '关注列表'):
+            import_list_to_database(unique_id, '关注列表')
     
     driver.quit()
