@@ -1,6 +1,7 @@
 import json
 import time
 import subprocess
+import pandas as pd
 from utils.cookie_manager import load_cookies, update_browser_cookies, save_last_processed_user, load_last_processed_user, save_cookies, validate_cookies
 from utils.browser_scheduler import start_chrome_browser, start_edge_browser, start_firefox_browser, kill_processes
 from actions.download_videos import download_top_videos
@@ -8,15 +9,20 @@ from utils.random_actions import perform_random_actions
 from actions.load_followers import load_list, import_list_to_database
 from actions.load_videos import load_videos
 
-def get_user_unique_ids(json_file_path):
-    try:
-        with open(json_file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-        return [user['user']['uniqueId'] for user in data]
-    except Exception as e:
-        print(f"Error loading user unique IDs: {e}")
-        return []
+# 读取Excel文件
+def read_excel(file_path):
+    print(f"Reading Excel file: {file_path}")
+    df = pd.read_excel(file_path)
+    print("Excel file read successfully")
+    return df
 
+# 更新Excel文件
+def update_excel(file_path, df):
+    print(f"Updating Excel file: {file_path}")
+    df.to_excel(file_path, index=False)
+    print("Excel file updated successfully")
+
+# 处理用户任务
 def process_user(driver, unique_id, action, sub_action=None):
     profile_url = f'https://www.tiktok.com/@{unique_id}'
     driver.get(profile_url)
@@ -32,12 +38,12 @@ def process_user(driver, unique_id, action, sub_action=None):
     elif action == 2:
         load_videos(driver, unique_id)
     elif action == 3:
-        print(f"Downloading videos for user: {unique_id}")
         download_top_videos(driver, profile_url, unique_id)
         perform_random_actions(driver, profile_url)
         print(f"Completed downloading videos for user: {unique_id}")
 
-def run_task_in_browser(start_browser_func, unique_ids, action, sub_action, run_duration, config_file_path):
+# 运行浏览器任务
+def run_task_in_browser(start_browser_func, df, run_duration, config_file_path):
     driver = start_browser_func()
     if driver:
         end_time = time.time() + run_duration
@@ -46,23 +52,25 @@ def run_task_in_browser(start_browser_func, unique_ids, action, sub_action, run_
             cookies = load_cookies(config_file_path)
             update_browser_cookies(driver, cookies)
 
-            for unique_id in unique_ids:
-                current_time = time.time()
-                if current_time >= end_time:
-                    print(f"Time limit reached. Finishing the current user task before switching browsers.")
-                    # 继续处理当前博主任务，直到完成
-                    process_user(driver, unique_id, action, sub_action)
-                    save_last_processed_user('last_processed_user.json', unique_id)
-                    print(f"Finished processing user: {unique_id}")
+            # 处理动作一的任务
+            for action_num, sub_action, user_column, status_column in [(1, '关注列表', '动作一关注列表_用户ID', '动作一_关注列表_执行'),
+                                                                      (1, '粉丝列表', '动作一_粉丝列表_用户ID', '动作一_粉丝列表_执行')]:
+                user_to_process = df[(df[user_column].notna()) & (df[status_column].fillna(0) == 0)].iloc[0]
+                process_user(driver, user_to_process[user_column], action_num, sub_action)
+                df.at[user_to_process.name, status_column] = 1
 
-                    break
+            # 动态交替执行动作二和动作三
+            while time.time() < end_time:
+                for action_num, user_column, status_column in [(2, '动作二_用户ID', '动作二_执行'), 
+                                                               (3, '动作三_用户ID', '动作三_执行')]:
+                    available_users = df[(df[user_column].notna()) & (df[status_column].fillna(0) == 0)]
+                    if not available_users.empty:
+                        user_to_process = available_users.iloc[0]
+                        process_user(driver, user_to_process[user_column], action_num)
+                        df.at[user_to_process.name, status_column] = 1
+                    if time.time() >= end_time:
+                        break
 
-                print(f"Processing user in browser: {unique_id}")
-                process_user(driver, unique_id, action, sub_action)
-                save_last_processed_user('last_processed_user.json', unique_id)
-                print(f"Finished processing user: {unique_id}")
-
-            # Save cookies after all users are processed
             cookies = driver.get_cookies()
             cookies = validate_cookies(cookies)
             with open(config_file_path, 'w', encoding='utf-8') as file:
@@ -76,46 +84,30 @@ def run_task_in_browser(start_browser_func, unique_ids, action, sub_action, run_
     else:
         print("Failed to start the browser")
 
-def main(action):
-    unique_ids = get_user_unique_ids('naoto.hamanaka_followings.json')
-    last_processed_user = load_last_processed_user('last_processed_user.json')
-
-    if last_processed_user:
-        start_index = unique_ids.index(last_processed_user) + 1
-    else:
-        start_index = 0
-
+# 主函数
+def main(excel_file):
+    print(f"Starting main function with Excel file: {excel_file}")
+    df = read_excel(excel_file)
+    print("Initial DataFrame:\n", df.head())
     browsers = [
         ("chrome", start_chrome_browser),
         ("msedge", start_edge_browser),
         ("firefox", start_firefox_browser)
     ]
     browser_index = 0
-    run_duration = 4 * 60
+    run_duration = 30 * 60
     config_file_path = r"D:\software\tiktok_crawl\config.json"
 
-    if action == 1:
-        sub_action = input("Please provide a sub-action (粉丝列表, 关注列表): ")
-    else:
-        sub_action = None
-
-    while start_index < len(unique_ids):
+    while True:
         process_name, browser_func = browsers[browser_index]
         print(f"Starting task with browser: {process_name}")
-        run_task_in_browser(browser_func, unique_ids[start_index:], action, sub_action, run_duration, config_file_path)
-        
-        last_processed_user = load_last_processed_user('last_processed_user.json')
-        if last_processed_user:
-            start_index = unique_ids.index(last_processed_user) + 1
-        
-        browser_index += 1
-        if browser_index >= len(browsers):
-            browser_index = 0
-        
+        run_task_in_browser(browser_func, df, run_duration, config_file_path)
+
+        browser_index = (browser_index + 1) % len(browsers)
         kill_processes(process_name)
-        
         print(f"Switching to next browser: {browsers[browser_index][0]}")
 
+        update_excel(excel_file, df)
+
 if __name__ == "__main__":
-    action = int(input("Please provide an action number (1, 2, or 3): "))
-    main(action)
+    main(r"D:\software\tiktok_crawl\任务表格.xlsx")
