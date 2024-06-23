@@ -107,9 +107,20 @@ def load_videos(driver, unique_id):
     save_video_data_to_file(unique_id, video_data)
     print(f"Extracted video data for {unique_id}: {video_data}")
 
+# 验证唯一ID是否存在于用户表中
+def validate_unique_id(cursor, unique_id):
+    cursor.execute("SELECT COUNT(*) FROM `用户` WHERE `唯一ID` = %s", (unique_id,))
+    return cursor.fetchone()[0] > 0
+
+# 导入视频数据到数据库
 def import_video_data_to_database(unique_id):
     connection = connect_to_database()
     cursor = connection.cursor()
+    
+    # 验证文件名和数据库中的唯一ID是否匹配
+    if not validate_unique_id(cursor, unique_id):
+        print(f"Error: unique_id {unique_id} not found in database.")
+        return
     
     output_folder = os.path.join(os.getcwd(), '视频数据')
     output_file_path = os.path.join(output_folder, f'{unique_id}.txt')
@@ -124,20 +135,18 @@ def import_video_data_to_database(unique_id):
     cursor.close()
     connection.close()
 
-# 示例的保存到数据库的函数
+# 保存视频数据到数据库
 def save_video_data(cursor, unique_id, video_data):
     insert_query = """
-        INSERT INTO `视频信息` (`唯一ID`, `视频链接`, `播放数`, `抓取时间`)
-        VALUES (%s, %s, %s, NOW())
-        ON DUPLICATE KEY UPDATE `播放数` = VALUES(`播放数`), `抓取时间` = NOW()
+        INSERT INTO `视频信息` (`唯一ID`, `视频链接`, `播放数`, `是否处理`)
+        VALUES (%s, %s, %s, FALSE)
+        ON DUPLICATE KEY UPDATE `播放数` = VALUES(`播放数`), `是否处理` = VALUES(`是否处理`)
     """
     cursor.execute(insert_query, (unique_id, video_data['url'], video_data['play_count']))
 
 if __name__ == "__main__":
-    unique_id = 'patriciarodriguez9631'  # 替换为你要测试的博主ID
+    unique_id = 'example_user_id'  # 替换为实际的唯一ID
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-
     load_videos(driver, unique_id)
     import_video_data_to_database(unique_id)
-    
     driver.quit()
